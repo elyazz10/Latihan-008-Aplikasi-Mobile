@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -23,10 +24,170 @@ class MyApp extends StatelessWidget {
       title: 'Firebase Auth Simple',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+      ), // ThemeData
+      // Menggunakan StreamBuilder untuk mendeteksi status login
+      home: const AuthWrapper(),
+    ); // MaterialApp
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // Menampilkan loading saat mengecek status
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ); // Scaffold
+        }
+        // Jika terdapat data user (sudah login), tampilkan halaman info
+        if (snapshot.hasData) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Dashboard User'),
+            ),
+            body: Center(
+              child: Text('Halo, ${snapshot.data!.email}'),
+            ),
+          );
+        }
+        // Jika tidak ada data user, tampilkan halaman login
+        return const LoginScreen();
+      },
+    ); // StreamBuilder
+  }
+}
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      // Jika berhasil, AuthWrapper otomatis mendeteksi perubahan stream
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message ?? 'Terjadi kesalahan saat login.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Login'),
       ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('Firebase Initialized'),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Icon(
+                Icons.lock_outline,
+                size: 80,
+                color: Colors.blue,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Selamat Datang',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red.shade900),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Login',
+                        style: TextStyle(fontSize: 16),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
