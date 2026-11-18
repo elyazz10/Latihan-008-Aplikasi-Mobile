@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Firebase Auth Simple',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -47,14 +48,7 @@ class AuthWrapper extends StatelessWidget {
         }
         // Jika terdapat data user (sudah login), tampilkan halaman info
         if (snapshot.hasData) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Dashboard User'),
-            ),
-            body: Center(
-              child: Text('Halo, ${snapshot.data!.email}'),
-            ),
-          );
+          return UserInfoScreen(user: snapshot.data!);
         }
         // Jika tidak ada data user, tampilkan halaman login
         return const LoginScreen();
@@ -191,5 +185,70 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+}
+
+class UserInfoScreen extends StatelessWidget {
+  final User user;
+
+  const UserInfoScreen({Key? key, required this.user}) : super(key: key);
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dashboard User'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          ), // IconButton
+        ],
+      ), // AppBar
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(Icons.account_circle, size: 100, color: Colors.blue),
+              const SizedBox(height: 24),
+              const Text(
+                'Login Berhasil!',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ), // Text
+              const SizedBox(height: 16),
+              Card(
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'UID: ${user.uid}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ), // Text
+                      const SizedBox(height: 8),
+                      Text('Email: ${user.email ?? "Tidak ada email"}'),
+                      const SizedBox(height: 8),
+                      Text('Email Terverifikasi: ${user.emailVerified ? "Ya" : "Tidak"}'),
+                      const SizedBox(height: 8),
+                      Text('Terakhir Login: ${user.metadata.lastSignInTime.toString()}'),
+                    ],
+                  ), // Column
+                ), // Padding
+              ), // Card
+            ],
+          ), // Column
+        ), // Padding
+      ), // Center
+    ); // Scaffold
   }
 }
