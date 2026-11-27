@@ -38,8 +38,10 @@ class NotificationDetailScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const Divider(height: 32),
-          Image.network(data["image"]),
-          const Divider(height: 32),
+          if (data["image"] != null) ...[
+            Image.network(data["image"]),
+            const Divider(height: 32),
+          ],
           const Text(
             'Data tambahan (data payload):',
             style: TextStyle(fontWeight: FontWeight.bold),
