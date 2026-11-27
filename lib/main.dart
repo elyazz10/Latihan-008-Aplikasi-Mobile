@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pertemuan_8/fcm_token_card.dart';
 import 'package:pertemuan_8/notification_service.dart';
 import 'firebase_options.dart';
 
@@ -215,7 +216,7 @@ class UserInfoScreen extends StatelessWidget {
           ), // IconButton
         ],
       ), // AppBar
-      body: Center(
+      body: SingleChildScrollView( 
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -246,7 +247,11 @@ class UserInfoScreen extends StatelessWidget {
                       Text('Email Terverifikasi: ${user.emailVerified ? "Ya" : "Tidak"}'),
                       const SizedBox(height: 8),
                       Text('Terakhir Login: ${user.metadata.lastSignInTime.toString()}'),
+                      const SizedBox(height: 16),     // <-- BARU
+              const FcmTokenCard(),           
+
                     ],
+                    
                   ), // Column
                 ), // Padding
               ), // Card
